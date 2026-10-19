@@ -6,7 +6,7 @@ const dbPath = process.env.DB_PATH || './dev.db'
 
 const db = new Database(dbPath)
 
-db.program('foreign_keys = ON')
+db.pragma('foreign_keys = ON')
 
 module.exports = db
 
