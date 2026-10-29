@@ -1,6 +1,6 @@
 const express = require('express')
 const router = express.Router()
-
+const authService = require('../services/auth.service')
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
@@ -10,7 +10,7 @@ function validationError(res,message){
     })
 }
 
-router.post('/register',(req,res) => {
+router.post('/register', async (req,res) => {
     const {name,email,password} = req.body || {}
 
     if(typeof name !== 'string' || name.trim() === ''){
@@ -21,16 +21,20 @@ router.post('/register',(req,res) => {
         return validationError(res,'A valid email is required')
     }
 
-    if(typeof password !== 'string' || !password.length < 8){
+    if(typeof password !== 'string' || password.length < 8){
         return validationError(res,'Password must be at least 8 characters')
     }
 
     const cleanEmail = email.trim().toLowerCase()
 
-    res.status(200).json({
-        name:name.trim(),
-        email: cleanEmail
-    })
+    const user = await authService.registerUser(name.trim(),cleanEmail,password)
+    if(user === null){
+        return res.status(409).json({
+            error: {code:'EMAIL_ALREADY_EXISTS',message:'Email is already registered'}
+        })
+    }
+
+    res.status(201).json({ user })
 })
 
 module.exports = router
