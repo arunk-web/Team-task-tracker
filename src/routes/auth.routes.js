@@ -33,8 +33,33 @@ router.post('/register', async (req,res) => {
             error: {code:'EMAIL_ALREADY_EXISTS',message:'Email is already registered'}
         })
     }
-
     res.status(201).json({ user })
+})
+
+
+router.post('/login' , async(req,res) => {
+    const {email,password} = req.body || {}
+
+    if(typeof email !== 'string' || email.trim() === ''){
+        return validationError(res,'Email is required')
+    }
+
+    if(typeof password !== 'string' || password === ''){
+        return validationError(res,'Password is required')
+    }
+
+    const cleanmail = email.trim().toLowerCase()
+    
+    const result = await authService.loginUser(cleanmail,password)
+    
+    if(result == null){
+        return res.status(401).json({
+            error: {code: 'INVALID_CRENDENTIALS' , message : 'Invalid email or password'}
+        })
+    }
+
+    return res.status(200).json(result)
+
 })
 
 module.exports = router
