@@ -28,6 +28,63 @@ router.post('/',(req,res) => {
     return res.status(201).json({project})
 })
 
+router.get('/',(req,res) => {
+    const projects = projectService.listProjects(req.user.id)
+
+    return res.status(200).json({projects})
+})
+
+
+
+router.get('/:id', (req,res) => {
+    const projectId = Number(req.params.id)
+
+    if(!Number.isInteger(projectId) || projectId <= 0){
+        return validationError(res,'Project id must be a positive number')
+    }
+
+    const result = projectService.getProject(projectId,req.user.id)
+
+    if(result.error === 'NOT_FOUND'){
+        return res.status(404).json({
+            error : {code : 'NOT_FOUND', message : 'Project not found'}
+        })
+    }
+
+    if(result.error === 'FORBIDDEN') {
+        return res.status(403).json({
+            error: { code: 'FORBIDDEN', message: 'You are not a member of this project' }
+        })
+    }
+
+    return res.status(200).json({ project: result.project })
+})
+
+
+router.delete('/:id', (req,res) => {
+    const id = Number(req.params.id);
+
+    if(!Number.isInteger(id) || id <= 0){
+        return validationError(res,'Project id must be a positive number')
+    }
+
+    const result = projectService.deleteProject(id,req.user.id)
+
+    if(result.error === 'NOT_FOUND'){
+        return res.status(404).json({
+            error : {code: 'NOT_FOUND', message: 'Project not found'}
+        })
+    }
+
+    if(result.error === 'FORBIDDEN'){
+        return res.status(403).json({
+            error:{code:'FORBIDDEN' , message: 'Only the project owner can delete this project'}
+        })
+    }
+
+    return res.status(204).send()
+})
+
 
 module.exports = router
 
