@@ -1,6 +1,7 @@
 const express = require('express')
 const router = express.Router()
 const authService = require('../services/auth.service')
+const authMiddleware = require('../middleware/auth')
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
@@ -51,7 +52,7 @@ router.post('/login' , async(req,res) => {
     const cleanmail = email.trim().toLowerCase()
     
     const result = await authService.loginUser(cleanmail,password)
-    
+
     if(result == null){
         return res.status(401).json({
             error: {code: 'INVALID_CRENDENTIALS' , message : 'Invalid email or password'}
@@ -60,6 +61,10 @@ router.post('/login' , async(req,res) => {
 
     return res.status(200).json(result)
 
+})
+
+router.get('/me', authMiddleware , (req,res) => {
+    res.json({user : req.user})
 })
 
 module.exports = router

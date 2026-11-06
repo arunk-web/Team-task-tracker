@@ -50,6 +50,16 @@ function isMember(projectId, userId){
     return isMemberStmt.get(projectId,userId) !== undefined
 }
 
+const deleteProjectStmt = db.prepare('DELETE FROM projects WHERE id = ?')
 
-module.exports = {createProject, listProjectsForUser, findProjectById, isMember}
+function deleteProject(id){
+    deleteProjectStmt.run(id)
+}
+
+const addMemberStmt = db.prepare('INSERT INTO project_members (project_id, user_id) VALUES (?, ?)')
+function addMember(projectId,userId){
+    addMemberStmt.run(projectId,userId)
+}
+
+module.exports = {createProject, listProjectsForUser, findProjectById, isMember,deleteProject,addMember}
 
