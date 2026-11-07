@@ -85,6 +85,52 @@ router.delete('/:id', (req,res) => {
     return res.status(204).send()
 })
 
+router.post('/:id/members',(req,res) => {
+    const projectId = Number(req.params.id)
+
+    if(!Number.isInteger(projectId) || projectId <= 0){
+        return validationError(res,'Project id must be a positive number')
+    }
+
+    const {email} = req.body || {}
+
+    if(typeof email !== 'string' || email.trim() === ''){
+        return validationError(res,'email is required')
+    }
+
+    const cleanEmail = email.trim().toLowerCase()
+
+    const result = projectService.addMember(projectId,req.user.id,cleanEmail)
+
+    if(result.error === 'NOT_FOUND'){
+        return res.status(404).json({
+            error:{code:'NOT_FOUND',message: 'Project not found'}
+        })
+    }
+
+
+    if(result.error === 'FORBIDDEN'){
+        return res.status(403).json({
+            error:{code:'FORBIDDEN',message: 'Only the project owner can add members'}
+        })
+    }
+
+
+    if (result.error === 'USER_NOT_FOUND') {
+        return res.status(404).json({
+            error: { code: 'USER_NOT_FOUND', message: 'No registered user with this email' }
+        })
+    }
+
+    if (result.error === 'ALREADY_MEMBER') {
+        return res.status(409).json({
+            error: { code: 'ALREADY_MEMBER', message: 'User is already a member of this project' }
+        })
+    }
+
+    return res.status(201).json({ member: result.member })
+
+})
 
 module.exports = router
 
