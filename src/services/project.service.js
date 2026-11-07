@@ -1,4 +1,5 @@
 const projectRepo = require('../repositories/project.repository')
+const {findByEmail} = require('../repositories/user.repository')
 
 const createProject = (name,description,ownerId) => {
     const id = projectRepo.createProject(name,description,ownerId)
@@ -63,4 +64,28 @@ function deleteProject(projectId,userId){
 
 }
 
-module.exports = { createProject,listProjects , getProject,deleteProject }
+function addMember(projectId,requesterId,email){
+    const project = projectRepo.findProjectById(projectId)
+    if(!project){
+        return {error: 'NOT_FOUND'}
+    }
+
+    if(project.owner_id !== requesterId){
+        return {error : 'FORBIDDEN'}
+    }
+
+    const user = findByEmail(email)
+    if(!user){
+        return {error : 'USER_NOT_FOUND'}
+    }
+
+    if(projectRepo.isMember(projectId,user.id)){
+        return {error : 'ALREADY_MEMBER'}
+    }
+
+    projectRepo.addMember(projectId,user.id)
+    
+    return {member: {id:user.id , name: user.name ,email:user.email } }
+}
+
+module.exports = { createProject,listProjects , getProject,deleteProject,addMember }
