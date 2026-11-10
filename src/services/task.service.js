@@ -52,6 +52,46 @@ function createTask(projectId, userId, data) {
     return { task: formatTask(row) }
 }
 
+function updateTask(taskId,userId,changes){
+    const task = projectRepo.isMember(task.project_id,userId)
 
+    if(!task){
+        return {error : 'NOT_FOUND'}
+    }
 
-module.exports = { createTask }
+    if(!projectRepo.isMember(task.project_id, userId)){
+        return {error: 'FORBIDDEN'}
+    }
+
+    const hasAssignee = changes.assigneeId !== undefined && changes.assigneeId !== null
+    if(hasAssignee && !projectRepo.isMember(task.project_id,changes.assigneeId)) {
+        return {error : 'INVALID_ASSIGNEE'}
+    }
+
+    const fields = {}
+
+    if(changes.title !== undefined) fields.title = changes.title
+    if(changes.description !== undefined) fields.description = changes.description
+    if(changes.priority !== undefined) fields.priority = changes.priority
+    if(changes.dueDate !== undefined) fields.due_date = changes.dueDate
+    if(changes.assigneeId !== undefined) fields.assignee_id = changes.assigneeId
+
+    if (changes.status !== undefined) {
+        fields.status = changes.status
+
+        if (changes.status === 'DONE' && task.status !== 'DONE') {
+            fields.completed_at = new Date().toISOString()
+        } else if (changes.status !== 'DONE' && task.status === 'DONE') {
+            fields.completed_at = null
+        }
+    }
+
+    taskRepo.updateTask(taskId, fields)
+
+    const row = taskRepo.findTaskById(taskId)
+
+    return { task: formatTask(row) }
+
+}
+
+module.exports = { createTask , updateTask}

@@ -25,4 +25,24 @@ function findTaskById(id) {
     return findTaskStmt.get(id)
 }
 
-module.exports = { createTask, findTaskById }
+const UPDATABLE_COLUMNS = ['title','description','priority','status','due_date','assignee_id','completed_at']
+
+function updateTask(id,fields){
+    const keys = object.keys(fields).filter((key) => UPDATABLE_COLUMNS.includes(key))
+
+    if(keys.length === 0){
+        return
+    }
+
+    const setClause = keys.map((key) => `${key} = ?`).join(', ')
+    const values = keys.map((key) => fields[key])
+
+    db.prepare(
+        `UPDATE tasks SET ${setClause},updated_at = CURRENT_TIMESTAMP WHERE id = ?`
+    ).run(...values,id)
+
+}
+
+
+
+module.exports = { createTask, findTaskById , updateTask}
