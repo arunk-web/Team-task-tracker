@@ -1,6 +1,8 @@
 const taskRepo = require('../repositories/task.repository')
 const projectRepo = require('../repositories/project.repository')
 
+
+
 function formatTask(row) {
     return {
         id: row.id,
@@ -17,6 +19,8 @@ function formatTask(row) {
         completedAt: row.completed_at
     }
 }
+
+
 
 function createTask(projectId, userId, data) {
     const project = projectRepo.findProjectById(projectId)
@@ -47,5 +51,7 @@ function createTask(projectId, userId, data) {
 
     return { task: formatTask(row) }
 }
+
+
 
 module.exports = { createTask }
