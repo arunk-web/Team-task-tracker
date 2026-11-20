@@ -201,6 +201,101 @@ router.post('/:id/tasks', (req, res) => {
     return res.status(201).json({ task: result.task })
 })
 
+const STATUSES = ['TODO', 'IN_PROGRESS', 'DONE']
+const SORT_FIELDS = ['createdAt', 'dueDate']
+const ORDERS = ['asc', 'desc']
+const DEFAULT_PAGE_SIZE = 10
+const MAX_PAGE_SIZE = 50
+
+function isValidIsoDate(value) {
+    return (
+        typeof value === 'string' &&
+        ISO_DATE_REGEX.test(value) &&
+        !Number.isNaN(Date.parse(value))
+    )
+}
+
+
+router.get('/:id/tasks', (req, res) => {
+    const projectId = Number(req.params.id)
+
+    if (!Number.isInteger(projectId) || projectId <= 0) {
+        return validationError(res, 'Project id must be a positive number')
+    }
+
+    const { page, pageSize, status, priority, assigneeId, dueFrom, dueTo, sortBy, order } = req.query
+
+    const pageNumber = page === undefined ? 1 : Number(page)
+    if (!Number.isInteger(pageNumber) || pageNumber <= 0) {
+        return validationError(res, 'Page must be a positive number')
+    }
+
+    const pageSizeNumber = pageSize === undefined ? DEFAULT_PAGE_SIZE : Number(pageSize)
+    if (!Number.isInteger(pageSizeNumber) || pageSizeNumber <= 0 || pageSizeNumber > MAX_PAGE_SIZE) {
+        return validationError(res, `Page size must be a number between 1 and ${MAX_PAGE_SIZE}`)
+    }
+
+    if (status !== undefined && !STATUSES.includes(status)) {
+        return validationError(res, 'Status must be TODO, IN_PROGRESS or DONE')
+    }
+
+    if (priority !== undefined && !PRIORITIES.includes(priority)) {
+        return validationError(res, 'Priority must be LOW, MEDIUM or HIGH')
+    }
+
+    let assigneeNumber
+    if (assigneeId !== undefined) {
+        assigneeNumber = Number(assigneeId)
+        if (!Number.isInteger(assigneeNumber) || assigneeNumber <= 0) {
+            return validationError(res, 'Assignee id must be a positive number')
+        }
+    }
+
+    if (dueFrom !== undefined && !isValidIsoDate(dueFrom)) {
+        return validationError(res, 'dueFrom must be a valid ISO-8601 date')
+    }
+
+    if (dueTo !== undefined && !isValidIsoDate(dueTo)) {
+        return validationError(res, 'dueTo must be a valid ISO-8601 date')
+    }
+
+    if (sortBy !== undefined && !SORT_FIELDS.includes(sortBy)) {
+        return validationError(res, 'sortBy must be createdAt or dueDate')
+    }
+
+    if (order !== undefined && !ORDERS.includes(order)) {
+        return validationError(res, 'order must be asc or desc')
+    }
+
+    const result = taskService.listTasks(projectId, req.user.id, {
+        page: pageNumber,
+        pageSize: pageSizeNumber,
+        status,
+        priority,
+        assigneeId: assigneeNumber,
+        dueFrom,
+        dueTo,
+        sortBy: sortBy ?? 'createdAt',
+        order: order ?? 'desc'
+    })
+
+    if (result.error === 'NOT_FOUND') {
+        return res.status(404).json({
+            error: { code: 'NOT_FOUND', message: 'Project not found' }
+        })
+    }
+
+    if (result.error === 'FORBIDDEN') {
+        return res.status(403).json({
+            error: { code: 'FORBIDDEN', message: 'You are not a member of this project' }
+        })
+    }
+
+    return res.status(200).json({
+        tasks: result.tasks,
+        pagination: result.pagination
+    })
+})
 
 module.exports = router
 

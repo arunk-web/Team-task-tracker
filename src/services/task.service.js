@@ -91,7 +91,70 @@ function updateTask(taskId,userId,changes){
     const row = taskRepo.findTaskById(taskId)
 
     return { task: formatTask(row) }
-
 }
 
-module.exports = { createTask , updateTask}
+function deleteTask(taskId, userId) {
+    const task = taskRepo.findTaskById(taskId)
+    if (!task) {
+        return { error: 'NOT_FOUND' }
+    }
+
+    if (!projectRepo.isMember(task.project_id, userId)) {
+        return { error: 'FORBIDDEN' }
+    }
+
+    const project = projectRepo.findProjectById(task.project_id)
+
+    const isOwner = project.owner_id === userId
+    const isCreator = task.created_by === userId
+
+    if (!isOwner && !isCreator) {
+        return { error: 'FORBIDDEN' }
+    }
+
+    taskRepo.deleteTask(taskId)
+
+    return { success: true }
+}
+
+
+
+function listTasks(projectId, userId, query) {
+    const project = projectRepo.findProjectById(projectId)
+    if (!project) {
+        return { error: 'NOT_FOUND' }
+    }
+
+    if (!projectRepo.isMember(projectId, userId)) {
+        return { error: 'FORBIDDEN' }
+    }
+
+    const offset = (query.page - 1) * query.pageSize
+
+    const { rows, total } = taskRepo.listTasks(projectId, {
+        status: query.status,
+        priority: query.priority,
+        assigneeId: query.assigneeId,
+        dueFrom: query.dueFrom,
+        dueTo: query.dueTo,
+        sortBy: query.sortBy,
+        order: query.order,
+        limit: query.pageSize,
+        offset
+    })
+
+    const tasks = rows.map(formatTask)
+    const totalPages = Math.ceil(total / query.pageSize)
+
+    return {
+        tasks,
+        pagination: {
+            page: query.page,
+            pageSize: query.pageSize,
+            total,
+            totalPages
+        }
+    }
+}
+
+module.exports = { createTask , updateTask, deleteTask, listTasks}

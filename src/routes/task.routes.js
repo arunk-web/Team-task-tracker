@@ -90,4 +90,31 @@ router.patch('/:id', (req, res) => {
     return res.status(200).json({ task: result.task })
 })
 
+
+router.delete('/:id', (req, res) => {
+    const taskId = Number(req.params.id)
+
+    if (!Number.isInteger(taskId) || taskId <= 0) {
+        return validationError(res, 'Task id must be a positive number')
+    }
+
+    const result = taskService.deleteTask(taskId, req.user.id)
+
+    if (result.error === 'NOT_FOUND') {
+        return res.status(404).json({
+            error: { code: 'NOT_FOUND', message: 'Task not found' }
+        })
+    }
+
+    if (result.error === 'FORBIDDEN') {
+        return res.status(403).json({
+            error: { code: 'FORBIDDEN', message: 'Only the project owner or the task creator can delete this task' }
+        })
+    }
+
+    return res.status(204).send()
+})
+
+
+
 module.exports = router
