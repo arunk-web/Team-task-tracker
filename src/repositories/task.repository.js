@@ -106,7 +106,22 @@ function listTasks(projectId, options) {
     return { rows, total }
 }
 
+const countByStatusStmt = db.prepare(
+    'SELECT status, COUNT(*) AS count FROM tasks WHERE project_id = ? GROUP BY status'
+)
 
-module.exports = { createTask, findTaskById , updateTask, deleteTask, listTasks}
+const countByPriorityStmt = db.prepare(
+    'SELECT priority, COUNT(*) AS count FROM tasks WHERE project_id = ? GROUP BY priority'
+)
+
+function getTaskCounts(projectId) {
+    return {
+        byStatus: countByStatusStmt.all(projectId),
+        byPriority: countByPriorityStmt.all(projectId)
+    }
+}
+
+
+module.exports = { createTask, findTaskById , updateTask, deleteTask, listTasks, getTaskCounts}
 
 

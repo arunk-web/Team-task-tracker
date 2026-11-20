@@ -157,4 +157,32 @@ function listTasks(projectId, userId, query) {
     }
 }
 
-module.exports = { createTask , updateTask, deleteTask, listTasks}
+function getSummary(projectId, userId) {
+    const project = projectRepo.findProjectById(projectId)
+    if (!project) {
+        return { error: 'NOT_FOUND' }
+    }
+
+    if (!projectRepo.isMember(projectId, userId)) {
+        return { error: 'FORBIDDEN' }
+    }
+
+    const counts = taskRepo.getTaskCounts(projectId)
+
+    const byStatus = { TODO: 0, IN_PROGRESS: 0, DONE: 0 }
+    const byPriority = { LOW: 0, MEDIUM: 0, HIGH: 0 }
+
+    for (const row of counts.byStatus) {
+        byStatus[row.status] = row.count
+    }
+
+    for (const row of counts.byPriority) {
+        byPriority[row.priority] = row.count
+    }
+
+    const total = Object.values(byStatus).reduce((sum, n) => sum + n, 0)
+
+    return { summary: { total, byStatus, byPriority } }
+}
+
+module.exports = { createTask , updateTask, deleteTask, listTasks, getSummary}

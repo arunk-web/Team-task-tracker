@@ -297,5 +297,30 @@ router.get('/:id/tasks', (req, res) => {
     })
 })
 
+router.get('/:id/summary', (req, res) => {
+    const projectId = Number(req.params.id)
+
+    if (!Number.isInteger(projectId) || projectId <= 0) {
+        return validationError(res, 'Project id must be a positive number')
+    }
+
+    const result = taskService.getSummary(projectId, req.user.id)
+
+    if (result.error === 'NOT_FOUND') {
+        return res.status(404).json({
+            error: { code: 'NOT_FOUND', message: 'Project not found' }
+        })
+    }
+
+    if (result.error === 'FORBIDDEN') {
+        return res.status(403).json({
+            error: { code: 'FORBIDDEN', message: 'You are not a member of this project' }
+        })
+    }
+
+    return res.status(200).json({ summary: result.summary })
+})
+
+
 module.exports = router
 
