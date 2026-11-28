@@ -6,7 +6,7 @@ const insertProject = db.prepare(
 
 
 const insertMember = db.prepare(
-    'INSERT INTO projects_members (project_id,user_id) VALUES(?,?)'
+    'INSERT INTO project_members (project_id, user_id) VALUES (?,?)'
 )
 
 
