@@ -28,7 +28,7 @@ function findTaskById(id) {
 const UPDATABLE_COLUMNS = ['title','description','priority','status','due_date','assignee_id','completed_at']
 
 function updateTask(id,fields){
-    const keys = object.keys(fields).filter((key) => UPDATABLE_COLUMNS.includes(key))
+    const keys = Object.keys(fields).filter((key) => UPDATABLE_COLUMNS.includes(key))
 
     if(keys.length === 0){
         return

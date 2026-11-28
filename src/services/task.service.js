@@ -53,7 +53,7 @@ function createTask(projectId, userId, data) {
 }
 
 function updateTask(taskId,userId,changes){
-    const task = projectRepo.isMember(task.project_id,userId)
+    const task = taskRepo.findTaskById(taskId)
 
     if(!task){
         return {error : 'NOT_FOUND'}
