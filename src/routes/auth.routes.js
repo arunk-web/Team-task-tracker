@@ -55,7 +55,7 @@ router.post('/login' , async(req,res) => {
 
     if(result == null){
         return res.status(401).json({
-            error: {code: 'INVALID_CRENDENTIALS' , message : 'Invalid email or password'}
+            error: {code: 'INVALID_CREDENTIALS' , message : 'Invalid email or password'}
         })
     }
 
